@@ -3,155 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <title>Loja de Jogos</title>
-<style>
-body { font-family: Arial, sans-serif; background:#121212; color:#fff; margin:0; padding:20px; }
-h1 { text-align:center; color:#00ffff; margin-bottom:20px; }
-#tabs { display:flex; justify-content:center; margin-bottom:20px; }
-#tabs button { background:#1f1f1f; color:#fff; border:none; padding:10px 20px; margin:0 5px; border-radius:5px; cursor:pointer; transition:0.2s; }
-#tabs button:hover { background:#00ffff; color:#000; }
-input, button { padding:10px; margin:5px 0; border-radius:5px; border:none; }
-input { width:100%; max-width:300px; }
-button { cursor:pointer; background:#00ffff; color:#000; font-weight:bold; transition:0.2s; }
-button:hover { background:#00bfbf; }
-section { display:none; margin-top:20px; }
-#catalogo, #adminCatalogo { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; }
-.card { background:#1f1f1f; padding:15px; border-radius:10px; width:200px; text-align:center; box-shadow:0 5px 15px rgba(0,255,255,0.2); transition:0.3s; }
-.card:hover { transform: translateY(-5px); box-shadow:0 10px 20px rgba(0,255,255,0.4); }
-.card img { width:100%; border-radius:5px; margin-bottom:10px; }
-.card h3 { margin:5px 0; color:#00ffff; }
-#carrinho { background:#1f1f1f; padding:15px; border-radius:10px; margin-top:20px; width:90%; max-width:500px; margin-left:auto; margin-right:auto; }
-#carrinho ul { list-style:none; margin-top:10px; padding-left:0; }
-#carrinho button { background:#ff5555; color:#fff; padding:5px 10px; margin-left:10px; cursor:pointer; }
-@media(max-width:600px){ #catalogo, #adminCatalogo { flex-direction:column; align-items:center; } .card { width:90%; } input, button { width:90%; } }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>Loja de Jogos</h1>
-
-<div id="tabs">
-    <button onclick="abrirAba('login')">Login</button>
-    <button onclick="abrirAba('loja')">Loja</button>
-    <button id="adminTab" onclick="abrirAba('admin')" style="display:none;">Admin</button>
+<header>
+    <input type="text" id="search" placeholder="Buscar jogo...">
     <button onclick="logout()">Logout</button>
+</header>
+
+<div id="catalogo"></div>
+
+<div class="carrinho">
+    <h3>Carrinho</h3>
+    <ul id="listaCarrinho"></ul>
+    <strong>Total: R$ <span id="total">0.00</span></strong>
+    <button onclick="finalizarCompra()">Finalizar Compra</button>
 </div>
 
-<!-- LOGIN -->
-<section id="login">
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Usuário"><br>
-    <input type="password" id="password" placeholder="Senha"><br>
-    <button onclick="login()">Entrar</button>
-</section>
-
-<!-- LOJA -->
-<section id="loja">
-    <h2>Catálogo</h2>
-    <input type="text" id="search" placeholder="Pesquisar..."><br>
-    <div id="catalogo"></div>
-    <div id="carrinho">
-        <h3>Carrinho</h3>
-        <ul id="carrinhoLista"></ul>
-        <strong>Total: R$ <span id="total">0.00</span></strong><br>
-        <button onclick="finalizarCompra()">Finalizar Compra</button>
-    </div>
-</section>
-
-<!-- ADMIN -->
-<section id="admin">
-    <h2>Admin - Gerenciar Jogos</h2>
-    <input type="text" id="gameName" placeholder="Nome do Jogo"><br>
-    <input type="text" id="gameGenre" placeholder="Gênero"><br>
-    <input type="number" step="0.01" id="gamePrice" placeholder="Preço"><br>
-    <input type="text" id="gameImage" placeholder="URL da Imagem"><br>
-    <button onclick="adicionarJogo()">Adicionar Jogo</button>
-    <div id="adminCatalogo"></div>
-</section>
-
 <script>
-// ===== DADOS =====
-let users = [
-    { username:"admin", password:"1234", role:"admin" },
-    { username:"user", password:"1234", role:"user" }
-];
+const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if(!currentUser) {
+    alert("🔒 Faça login!");
+    window.location.href = "index.html";
+}
 
+// Jogos
 let jogos = JSON.parse(localStorage.getItem("games")) || [
     { nome:"The Witcher 3", genero:"RPG", preco:59.90, imagem:"https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg" },
-    { nome:"GTA V", genero:"Ação", preco:79.90, imagem:"https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png" }
+    { nome:"GTA V", genero:"Ação", preco:79.90, imagem:"https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png" },
+    { nome:"Minecraft", genero:"Sandbox", preco:49.90, imagem:"https://upload.wikimedia.org/wikipedia/en/5/51/Minecraft_cover.png" }
 ];
 
-let carrinho = [];
-let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+let carrinho = currentUser.cart || [];
 
-// ===== FUNÇÕES DE ABA =====
-function abrirAba(nome){
-    document.querySelectorAll("section").forEach(sec => sec.style.display="none");
-    document.getElementById(nome).style.display="block";
-    if(nome==="admin") document.getElementById("adminTab").style.display="block";
-}
+const catalogo = document.getElementById("catalogo");
+const search = document.getElementById("search");
+const listaCarrinho = document.getElementById("listaCarrinho");
+const totalSpan = document.getElementById("total");
 
-// ===== LOGIN =====
-function login(){
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
-    const found = users.find(u => u.username===user && u.password===pass);
-    if(!found) return alert("Usuário ou senha incorretos!");
-    currentUser = found;
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
-    alert("Login realizado com sucesso!");
-    abrirAba("loja");
-    if(currentUser.role==="admin") document.getElementById("adminTab").style.display="block";
-    mostrarJogos(jogos);
-    mostrarAdmin();
-}
-
-// ===== LOGOUT =====
-function logout(){
+function logout() {
     localStorage.removeItem("currentUser");
-    currentUser=null;
-    abrirAba("login");
-    document.getElementById("adminTab").style.display="none";
+    window.location.href = "index.html";
 }
 
-// ===== LOJA =====
 function mostrarJogos(lista){
-    const catalogo = document.getElementById("catalogo");
-    catalogo.innerHTML="";
-    lista.forEach(j => {
+    catalogo.innerHTML = "";
+    lista.forEach(jogo => {
         const card = document.createElement("div");
-        card.className="card";
-        card.innerHTML=`
-            <img src="${j.imagem}">
-            <h3>${j.nome}</h3>
-            <p>${j.genero}</p>
-            <strong>R$ ${j.preco.toFixed(2)}</strong><br>
-            <button onclick='adicionarCarrinho(${JSON.stringify(j)})'>Comprar</button>
+        card.className = "card";
+        card.innerHTML = `
+            <img src="${jogo.imagem}">
+            <div class="info">
+                <h3>${jogo.nome}</h3>
+                <span>${jogo.genero}</span><br>
+                <strong>R$ ${jogo.preco.toFixed(2)}</strong><br><br>
+                <button onclick='adicionarCarrinho(${JSON.stringify(jogo)})'>Comprar</button>
+            </div>
         `;
         catalogo.appendChild(card);
     });
 }
 
-document.getElementById("search").addEventListener("input", ()=>{
-    const texto = document.getElementById("search").value.toLowerCase();
+search.addEventListener("input", ()=>{
+    const texto = search.value.toLowerCase();
     mostrarJogos(jogos.filter(j => j.nome.toLowerCase().includes(texto)));
 });
 
-// ===== CARRINHO =====
 function adicionarCarrinho(jogo){
     carrinho.push(jogo);
     atualizarCarrinho();
-}
-
-function atualizarCarrinho(){
-    const lista = document.getElementById("carrinhoLista");
-    const totalSpan = document.getElementById("total");
-    lista.innerHTML="";
-    let total=0;
-    carrinho.forEach((item,i)=>{
-        total+=item.preco;
-        lista.innerHTML+=`<li>${item.nome} - R$ ${item.preco.toFixed(2)} <button onclick="removerCarrinho(${i})">❌</button></li>`;
-    });
-    totalSpan.textContent=total.toFixed(2);
 }
 
 function removerCarrinho(idx){
@@ -159,76 +80,32 @@ function removerCarrinho(idx){
     atualizarCarrinho();
 }
 
+function atualizarCarrinho(){
+    listaCarrinho.innerHTML = "";
+    let total = 0;
+    carrinho.forEach((item,i)=>{
+        total += item.preco;
+        listaCarrinho.innerHTML += `<li>${item.nome} - R$ ${item.preco.toFixed(2)} <button onclick="removerCarrinho(${i})">❌</button></li>`;
+    });
+    totalSpan.textContent = total.toFixed(2);
+
+    // salvar no usuário
+    currentUser.cart = carrinho;
+    let users = JSON.parse(localStorage.getItem("users"));
+    const idx = users.findIndex(u => u.username === currentUser.username);
+    users[idx] = currentUser;
+    localStorage.setItem("users", JSON.stringify(users));
+}
+
 function finalizarCompra(){
-    if(carrinho.length===0) return alert("Carrinho vazio!");
-    alert("Compra realizada com sucesso!");
-    carrinho=[];
+    if(carrinho.length === 0) return alert("Carrinho vazio!");
+    alert("✅ Compra realizada!");
+    carrinho = [];
     atualizarCarrinho();
 }
 
-// ===== ADMIN =====
-function mostrarAdmin(){
-    if(!currentUser || currentUser.role!=="admin") return;
-    const adminCatalogo = document.getElementById("adminCatalogo");
-    adminCatalogo.innerHTML="";
-    jogos.forEach((j, idx)=>{
-        const card = document.createElement("div");
-        card.className="card";
-        card.innerHTML=`
-            <img src="${j.imagem}">
-            <h3>${j.nome}</h3>
-            <p>${j.genero}</p>
-            <strong>R$ ${j.preco.toFixed(2)}</strong><br>
-            <button onclick="editarJogo(${idx})">✏️ Editar</button>
-            <button onclick="removerJogo(${idx})">❌ Remover</button>
-        `;
-        adminCatalogo.appendChild(card);
-    });
-}
-
-function adicionarJogo(){
-    const nome = document.getElementById("gameName").value;
-    const genero = document.getElementById("gameGenre").value;
-    const preco = parseFloat(document.getElementById("gamePrice").value);
-    const imagem = document.getElementById("gameImage").value;
-    if(!nome||!genero||!preco||!imagem) return alert("Preencha todos os campos!");
-    jogos.push({nome,genero,preco,imagem});
-    localStorage.setItem("games", JSON.stringify(jogos));
-    mostrarJogos(jogos);
-    mostrarAdmin();
-}
-
-function removerJogo(idx){
-    if(!confirm("Deseja remover este jogo?")) return;
-    jogos.splice(idx,1);
-    localStorage.setItem("games", JSON.stringify(jogos));
-    mostrarJogos(jogos);
-    mostrarAdmin();
-}
-
-function editarJogo(idx){
-    const j=jogos[idx];
-    const nome=prompt("Nome:",j.nome);
-    const genero=prompt("Gênero:",j.genero);
-    const preco=parseFloat(prompt("Preço:",j.preco));
-    const imagem=prompt("URL da imagem:",j.imagem);
-    if(!nome||!genero||!preco||!imagem) return;
-    jogos[idx]={nome, genero, preco, imagem};
-    localStorage.setItem("games", JSON.stringify(jogos));
-    mostrarJogos(jogos);
-    mostrarAdmin();
-}
-
-// ===== INICIALIZAÇÃO =====
-if(currentUser){
-    abrirAba("loja");
-    if(currentUser.role==="admin") document.getElementById("adminTab").style.display="block";
-    mostrarJogos(jogos);
-    mostrarAdmin();
-}else{
-    abrirAba("login");
-}
+mostrarJogos(jogos);
+atualizarCarrinho();
 </script>
-
 </body>
 </html>
