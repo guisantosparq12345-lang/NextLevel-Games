@@ -10,202 +10,38 @@ body {
     background:#0f172a;
     color:white;
 }
-h1{text-align:center;color:#22c55e;}
-#tabs{display:flex;justify-content:center;gap:10px;margin:20px;}
-#tabs button{padding:10px 20px;background:#020617;color:white;border:none;border-radius:5px;cursor:pointer;}
-#tabs button:hover{background:#22c55e;color:#000;}
-section{display:none;padding:20px;}
-input, button{padding:10px;margin:5px 0;border-radius:5px;border:none;width:100%;max-width:300px;}
+h1{text-align:center;color:#22c55e;margin-top:20px;}
 #catalogo{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px;padding:20px;}
 .card{background:#020617;border-radius:10px;overflow:hidden;}
 .card img{width:100%;height:260px;object-fit:cover;}
 .info{padding:10px;}
 .info button{padding:8px;width:100%;background:#22c55e;color:#000;cursor:pointer;}
-.carrinho{background:#020617;padding:15px;border:2px solid #22c55e;margin-top:20px;}
+.carrinho{background:#020617;padding:15px;border:2px solid #22c55e;margin:20px auto;max-width:300px;}
 .carrinho ul{list-style:none;padding:0;}
 .carrinho li{font-size:14px;margin-bottom:10px;}
+input{padding:10px;width:90%;max-width:300px;margin:10px auto;display:block;border-radius:5px;border:none;}
+button{cursor:pointer;}
 </style>
 </head>
 <body>
 
 <h1>Loja de Jogos</h1>
 
-<div id="tabs">
-    <button onclick="abrirAba('login')">Login</button>
-    <button onclick="abrirAba('register')">Registrar</button>
-    <button onclick="abrirAba('loja')">Loja</button>
-    <button onclick="logout()">Logout</button>
+<input type="text" id="search" placeholder="Pesquisar...">
+
+<div id="catalogo"></div>
+
+<div class="carrinho">
+    <h3>Carrinho</h3>
+    <ul id="listaCarrinho"></ul>
+    <strong>Total: R$ <span id="total">0.00</span></strong><br>
+    <button onclick="finalizarCompra()">Finalizar Compra</button>
 </div>
 
-<!-- LOGIN -->
-<section id="login">
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Usuário">
-    <input type="password" id="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
-</section>
-
-<!-- REGISTRO -->
-<section id="register">
-    <h2>Registrar</h2>
-    <input type="text" id="regUsername" placeholder="Usuário">
-    <input type="password" id="regPassword" placeholder="Senha">
-    <button onclick="registrar()">Registrar</button>
-</section>
-
-<!-- LOJA -->
-<section id="loja">
-    <h2>Catálogo</h2>
-    <input type="text" id="search" placeholder="Pesquisar...">
-    <div id="catalogo"></div>
-    <div class="carrinho">
-        <h3>Carrinho</h3>
-        <ul id="listaCarrinho"></ul>
-        <strong>Total: R$ <span id="total">0.00</span></strong><br>
-        <button onclick="finalizarCompra()">Finalizar Compra</button>
-    </div>
-</section>
-
 <script>
-// ===== DADOS =====
-let users = JSON.parse(localStorage.getItem("users")) || [
-    {username:"admin", password:"1234", role:"admin", cart:[]}
-];
-
-let jogos = JSON.parse(localStorage.getItem("games")) || [
+// ===== JOGOS =====
+let jogos = [
     {nome:"The Witcher 3", genero:"RPG", preco:59.9, imagem:"https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg"},
     {nome:"GTA V", genero:"Ação", preco:79.9, imagem:"https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png"},
-    {nome:"Minecraft", genero:"Sandbox", preco:49.9, imagem:"https://upload.wikimedia.org/wikipedia/en/5/51/Minecraft_cover.png"}
-];
-
-localStorage.setItem("games", JSON.stringify(jogos));
-
-let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
-let carrinho = currentUser ? currentUser.cart : [];
-
-// ===== ABAS =====
-function abrirAba(nome){
-    document.querySelectorAll("section").forEach(sec => sec.style.display="none");
-    document.getElementById(nome).style.display="block";
-}
-
-// ===== LOGIN =====
-function login(){
-    const user = document.getElementById("username").value;
-    const pass = document.getElementById("password").value;
-
-    const found = users.find(u => u.username===user && u.password===pass);
-    if(!found) return alert("Usuário ou senha incorretos!");
-
-    currentUser = found;
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
-    carrinho = currentUser.cart || [];
-
-    alert("Login realizado!");
-    abrirAba("loja");
-    mostrarJogos(jogos);
-    atualizarCarrinho();
-}
-
-// ===== REGISTRO =====
-function registrar(){
-    const username = document.getElementById("regUsername").value;
-    const password = document.getElementById("regPassword").value;
-    if(!username || !password) return alert("Preencha todos os campos!");
-
-    if(users.some(u => u.username===username)) return alert("Usuário já existe!");
-
-    const novoUser = {username, password, role:"user", cart:[]};
-    users.push(novoUser);
-    localStorage.setItem("users", JSON.stringify(users));
-
-    alert("Usuário registrado com sucesso!");
-    abrirAba("login");
-}
-
-// ===== LOGOUT =====
-function logout(){
-    localStorage.removeItem("currentUser");
-    currentUser=null;
-    carrinho=[];
-    abrirAba("login");
-}
-
-// ===== LOJA =====
-const catalogo = document.getElementById("catalogo");
-const search = document.getElementById("search");
-const listaCarrinho = document.getElementById("listaCarrinho");
-const totalSpan = document.getElementById("total");
-
-function mostrarJogos(lista){
-    catalogo.innerHTML="";
-    lista.forEach(jogo => {
-        const card = document.createElement("div");
-        card.className="card";
-        card.innerHTML=`
-            <img src="${jogo.imagem}">
-            <div class="info">
-                <h3>${jogo.nome}</h3>
-                <span>${jogo.genero}</span><br>
-                <strong>R$ ${jogo.preco.toFixed(2)}</strong><br><br>
-                <button onclick='adicionarCarrinho(${JSON.stringify(jogo)})'>Comprar</button>
-            </div>
-        `;
-        catalogo.appendChild(card);
-    });
-}
-
-if(search){
-    search.addEventListener("input", ()=>{
-        const texto = search.value.toLowerCase();
-        mostrarJogos(jogos.filter(j=>j.nome.toLowerCase().includes(texto)));
-    });
-}
-
-// ===== CARRINHO =====
-function adicionarCarrinho(jogo){
-    carrinho.push(jogo);
-    atualizarCarrinho();
-}
-
-function atualizarCarrinho(){
-    listaCarrinho.innerHTML="";
-    let total=0;
-    carrinho.forEach((item,i)=>{
-        total+=item.preco;
-        listaCarrinho.innerHTML+=`<li>${item.nome} - R$ ${item.preco.toFixed(2)} <button onclick="removerCarrinho(${i})">❌</button></li>`;
-    });
-    totalSpan.textContent=total.toFixed(2);
-
-    if(currentUser){
-        currentUser.cart=carrinho;
-        const idx = users.findIndex(u=>u.username===currentUser.username);
-        users[idx]=currentUser;
-        localStorage.setItem("users", JSON.stringify(users));
-    }
-}
-
-function removerCarrinho(idx){
-    carrinho.splice(idx,1);
-    atualizarCarrinho();
-}
-
-function finalizarCompra(){
-    if(carrinho.length===0) return alert("Carrinho vazio!");
-    alert("✅ Compra realizada com sucesso!");
-    carrinho=[];
-    atualizarCarrinho();
-}
-
-// ===== INICIALIZAÇÃO =====
-if(currentUser){
-    abrirAba("loja");
-    mostrarJogos(jogos);
-    atualizarCarrinho();
-}else{
-    abrirAba("login");
-}
-</script>
-
-</body>
-</html>
+    {nome:"Minecraft", genero:"Sandbox", preco:49.9, imagem:"https://upload.wikimedia.org/wikipedia/en/5/51/Minecraft_cover.png"},
+    {nome:"God of War", genero:"Aventura", preco:89.9, imagem:"https://upload.wikimedia.org/wikipedia/en/a/a7/God_of_War_4_cover.jpg
