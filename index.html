@@ -10,6 +10,7 @@ body {
     background: #0f172a;
     color: white;
 }
+
 header {
     padding: 20px;
     background: #020617;
@@ -17,29 +18,35 @@ header {
     gap: 10px;
     align-items: center;
 }
+
 header input {
     padding: 10px;
     flex: 1;
 }
+
 #catalogo {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 20px;
     padding: 20px;
 }
+
 .card {
     background: #020617;
     border-radius: 10px;
     overflow: hidden;
 }
+
 .card img {
     width: 100%;
     height: 260px;
     object-fit: cover;
 }
+
 .info {
     padding: 10px;
 }
+
 .info button {
     padding: 8px;
     width: 100%;
@@ -49,6 +56,8 @@ header input {
     color: black;
     font-weight: bold;
 }
+
+/* CARRINHO */
 .carrinho {
     position: fixed;
     right: 0;
@@ -59,31 +68,34 @@ header input {
     padding: 15px;
     border-left: 2px solid #22c55e;
 }
+
 .carrinho h3 {
     margin-top: 0;
 }
+
 .carrinho ul {
     list-style: none;
     padding: 0;
 }
+
 .carrinho li {
     font-size: 14px;
     margin-bottom: 10px;
 }
+
 .carrinho button {
     background: #ff5555;
-    color: white;
     border: none;
     padding: 3px 6px;
+    color: white;
     cursor: pointer;
-    margin-left: 5px;
 }
 </style>
 </head>
 <body>
 
 <header>
-    <input type="text" id="search" placeholder="Pesquisar jogos...">
+    <input type="text" id="search" placeholder="Pesquisar jogo...">
 </header>
 
 <div id="catalogo"></div>
@@ -96,7 +108,7 @@ header input {
 </div>
 
 <script>
-// Lista de jogos
+// 🎮 Lista de jogos
 let jogos = [
     { nome: "The Witcher 3", genero: "RPG", preco: 59.90, imagem: "https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg" },
     { nome: "GTA V", genero: "Ação", preco: 79.90, imagem: "https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png" },
@@ -105,18 +117,78 @@ let jogos = [
     { nome: "Spider-Man 2", genero: "Ação", preco: 99.90, imagem: "https://upload.wikimedia.org/wikipedia/en/1/1b/Spider-Man_2_PS5_cover.jpg" }
 ];
 
+// 🛒 Carrinho
 let carrinho = [];
 
-// Elementos
+// ELEMENTOS
 const catalogo = document.getElementById("catalogo");
 const search = document.getElementById("search");
 const listaCarrinho = document.getElementById("listaCarrinho");
 const totalSpan = document.getElementById("total");
 
-// Mostrar jogos
+// 🚀 Mostrar jogos
 function mostrarJogos(lista) {
     catalogo.innerHTML = "";
-    lista.forEach((jogo, idx) => {
+    lista.forEach((jogo) => {
         const card = document.createElement("div");
         card.className = "card";
         card.innerHTML = `
+            <img src="${jogo.imagem}">
+            <div class="info">
+                <h3>${jogo.nome}</h3>
+                <p>${jogo.genero}</p>
+                <strong>R$ ${jogo.preco.toFixed(2)}</strong><br><br>
+                <button>Comprar</button>
+            </div>
+        `;
+        // Adiciona o evento do botão
+        card.querySelector("button").addEventListener("click", () => {
+            carrinho.push(jogo);
+            atualizarCarrinho();
+        });
+        catalogo.appendChild(card);
+    });
+}
+
+// 🔎 Busca
+search.addEventListener("input", () => {
+    const texto = search.value.toLowerCase();
+    const filtrados = jogos.filter(j => j.nome.toLowerCase().includes(texto));
+    mostrarJogos(filtrados);
+});
+
+// 🛒 Carrinho
+function atualizarCarrinho() {
+    listaCarrinho.innerHTML = "";
+    let total = 0;
+    carrinho.forEach((item, idx) => {
+        total += item.preco;
+        const li = document.createElement("li");
+        li.innerHTML = `${item.nome} - R$ ${item.preco.toFixed(2)} <button onclick="removerCarrinho(${idx})">❌</button>`;
+        listaCarrinho.appendChild(li);
+    });
+    totalSpan.textContent = total.toFixed(2);
+}
+
+function removerCarrinho(idx) {
+    carrinho.splice(idx, 1);
+    atualizarCarrinho();
+}
+
+function finalizarCompra() {
+    if(carrinho.length === 0) {
+        alert("Carrinho vazio!");
+        return;
+    }
+    alert("✅ Compra realizada!");
+    carrinho = [];
+    atualizarCarrinho();
+}
+
+// Inicializa
+mostrarJogos(jogos);
+atualizarCarrinho();
+</script>
+
+</body>
+</html>
