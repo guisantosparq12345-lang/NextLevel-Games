@@ -2,41 +2,121 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>Login - Loja de Jogos</title>
-<link rel="stylesheet" href="style.css">
+<title>Loja de Jogos</title>
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+}
+header {
+    padding: 20px;
+    background: #020617;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+header input {
+    padding: 10px;
+    flex: 1;
+}
+#catalogo {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    padding: 20px;
+}
+.card {
+    background: #020617;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.card img {
+    width: 100%;
+    height: 260px;
+    object-fit: cover;
+}
+.info {
+    padding: 10px;
+}
+.info button {
+    padding: 8px;
+    width: 100%;
+    background: #22c55e;
+    border: none;
+    cursor: pointer;
+    color: black;
+    font-weight: bold;
+}
+.carrinho {
+    position: fixed;
+    right: 0;
+    top: 0;
+    width: 260px;
+    height: 100%;
+    background: #020617;
+    padding: 15px;
+    border-left: 2px solid #22c55e;
+}
+.carrinho h3 {
+    margin-top: 0;
+}
+.carrinho ul {
+    list-style: none;
+    padding: 0;
+}
+.carrinho li {
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+.carrinho button {
+    background: #ff5555;
+    color: white;
+    border: none;
+    padding: 3px 6px;
+    cursor: pointer;
+    margin-left: 5px;
+}
+</style>
 </head>
 <body>
 
-<div class="login">
-    <h2>Login</h2>
-    <input type="text" id="username" placeholder="Usuário">
-    <input type="password" id="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
+<header>
+    <input type="text" id="search" placeholder="Pesquisar jogos...">
+</header>
+
+<div id="catalogo"></div>
+
+<div class="carrinho">
+    <h3>Carrinho</h3>
+    <ul id="listaCarrinho"></ul>
+    <strong>Total: R$ <span id="total">0.00</span></strong><br><br>
+    <button onclick="finalizarCompra()">Finalizar Compra</button>
 </div>
 
 <script>
-const users = [
-    { username: "admin", password: "1234", role: "admin", cart: [] },
-    { username: "user", password: "1234", role: "user", cart: [] }
+// Lista de jogos
+let jogos = [
+    { nome: "The Witcher 3", genero: "RPG", preco: 59.90, imagem: "https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg" },
+    { nome: "GTA V", genero: "Ação", preco: 79.90, imagem: "https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png" },
+    { nome: "Minecraft", genero: "Sandbox", preco: 49.90, imagem: "https://upload.wikimedia.org/wikipedia/en/5/51/Minecraft_cover.png" },
+    { nome: "God of War", genero: "Aventura", preco: 89.90, imagem: "https://upload.wikimedia.org/wikipedia/en/a/a7/God_of_War_4_cover.jpg" },
+    { nome: "Spider-Man 2", genero: "Ação", preco: 99.90, imagem: "https://upload.wikimedia.org/wikipedia/en/1/1b/Spider-Man_2_PS5_cover.jpg" }
 ];
 
-function login() {
-    const username = document.getElementById("username").value;
-    const password = document.getElementById("password").value;
+let carrinho = [];
 
-    const found = users.find(u => u.username === username && u.password === password);
-    if(!found) return alert("Usuário ou senha incorretos!");
+// Elementos
+const catalogo = document.getElementById("catalogo");
+const search = document.getElementById("search");
+const listaCarrinho = document.getElementById("listaCarrinho");
+const totalSpan = document.getElementById("total");
 
-    localStorage.setItem("currentUser", JSON.stringify(found));
-    localStorage.setItem("users", JSON.stringify(users));
-    
-    if(found.role === "admin") {
-        window.location.href = "admin.html";
-    } else {
-        window.location.href = "loja.html";
-    }
-}
-</script>
-
-</body>
-</html>
+// Mostrar jogos
+function mostrarJogos(lista) {
+    catalogo.innerHTML = "";
+    lista.forEach((jogo, idx) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = `
