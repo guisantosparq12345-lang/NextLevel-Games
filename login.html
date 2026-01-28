@@ -2,41 +2,35 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Loja de Jogos</title>
-    <style>
-        body { font-family: Arial; padding: 50px; }
-        input { display:block; margin:10px 0; padding:5px; }
-        button { padding:5px 10px; }
-    </style>
+    <title>Login Admin - Loja de Jogos</title>
 </head>
 <body>
-    <h1>Login</h1>
-    <input type="text" id="username" placeholder="Usuário">
-    <input type="password" id="password" placeholder="Senha">
-    <button onclick="login()">Entrar</button>
+    <h1>Login Admin</h1>
+    <form id="loginForm">
+        <label>Usuário:</label><br>
+        <input type="text" id="username"><br><br>
+        <label>Senha:</label><br>
+        <input type="password" id="password"><br><br>
+        <button type="submit">Entrar</button>
+    </form>
 
     <script>
-        // Usuários pré-cadastrados
-        const users = [
-            { username: "admin", password: "admin123", role: "admin" },
-            { username: "usuario", password: "user123", role: "user" }
-        ];
+        const loginForm = document.getElementById("loginForm");
 
-        function login() {
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+
             const username = document.getElementById("username").value;
             const password = document.getElementById("password").value;
 
-            const user = users.find(u => u.username === username && u.password === password);
-            if (!user) return alert("Usuário ou senha inválidos!");
-
-            localStorage.setItem("currentUser", JSON.stringify(user));
-
-            if(user.role === "admin") {
+            // Usuário admin fixo
+            if(username === "admin" && password === "1234") {
+                localStorage.setItem("currentUser", JSON.stringify({username:"admin", role:"admin"}));
                 window.location.href = "admin.html";
             } else {
-                window.location.href = "index.html";
+                alert("Usuário ou senha incorretos!");
             }
-        }
+        });
     </script>
 </body>
 </html>
