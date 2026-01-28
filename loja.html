@@ -1,150 +1,237 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <title>Loja de Jogos</title>
-<link rel="stylesheet" href="style.css">
+<style>
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+}
+h1 { text-align:center; color:#22c55e; }
+#tabs {
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin:20px 0;
+}
+#tabs button {
+    padding:10px 20px;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    background:#020617;
+    color:white;
+    transition:0.2s;
+}
+#tabs button:hover { background:#22c55e; color:black; }
+
+section { display:none; max-width:800px; margin:auto; }
+input, button { padding:10px; margin:5px 0; border-radius:5px; border:none; }
+button { cursor:pointer; background:#22c55e; color:black; font-weight:bold; transition:0.2s; }
+button:hover { background:#16a34a; }
+
+#catalogo {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:20px;
+    padding:20px 0;
+}
+.card {
+    background:#020617;
+    border-radius:10px;
+    overflow:hidden;
+}
+.card img { width:100%; height:260px; object-fit:cover; }
+.card .info { padding:10px; text-align:center; }
+.card .info button { width:100%; }
+
+.carrinho {
+    background:#020617;
+    padding:15px;
+    border:2px solid #22c55e;
+    border-radius:10px;
+    margin-top:20px;
+}
+.carrinho ul { list-style:none; padding:0; }
+.carrinho li { margin-bottom:10px; font-size:14px; }
+</style>
 </head>
 <body>
 
-<header>
-    <input type="text" id="search" placeholder="Buscar jogo...">
+<h1>Loja de Jogos</h1>
+
+<div id="tabs">
+    <button onclick="abrirAba('login')">Login</button>
+    <button onclick="abrirAba('register')">Registrar</button>
+    <button onclick="abrirAba('loja')">Loja</button>
     <button onclick="logout()">Logout</button>
-    <button onclick="abrirCarrinho()" id="carrinhoBtn">🛒 Carrinho (<span id="carrinhoCount">0</span>)</button>
-</header>
+</div>
 
-<div id="catalogo"></div>
+<!-- LOGIN -->
+<section id="login">
+    <h2>Login</h2>
+    <input type="text" id="loginUser" placeholder="Usuário"><br>
+    <input type="password" id="loginPass" placeholder="Senha"><br>
+    <button onclick="login()">Entrar</button>
+</section>
 
-<!-- MODAL DO CARRINHO -->
-<div class="modal" id="carrinhoModal">
-    <div class="modal-content">
-        <span class="close" onclick="fecharCarrinho()">&times;</span>
+<!-- REGISTRO -->
+<section id="register">
+    <h2>Registrar</h2>
+    <input type="text" id="regUser" placeholder="Usuário"><br>
+    <input type="password" id="regPass" placeholder="Senha"><br>
+    <button onclick="registrar()">Registrar</button>
+</section>
+
+<!-- LOJA -->
+<section id="loja">
+    <h2>Catálogo</h2>
+    <input type="text" id="search" placeholder="Pesquisar..."><br>
+    <div id="catalogo"></div>
+
+    <div class="carrinho">
         <h3>Carrinho</h3>
         <ul id="listaCarrinho"></ul>
         <strong>Total: R$ <span id="total">0.00</span></strong><br>
         <button onclick="finalizarCompra()">Finalizar Compra</button>
     </div>
-</div>
-
-<!-- NOTIFICAÇÃO -->
-<div id="toast"></div>
+</section>
 
 <script>
-const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-if(!currentUser) {
-    alert("🔒 Faça login!");
-    window.location.href = "index.html";
-}
-
-// Jogos
+// ===== DADOS =====
+let users = JSON.parse(localStorage.getItem("users")) || [];
 let jogos = JSON.parse(localStorage.getItem("games")) || [
     { nome:"The Witcher 3", genero:"RPG", preco:59.90, imagem:"https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg" },
     { nome:"GTA V", genero:"Ação", preco:79.90, imagem:"https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png" },
     { nome:"Minecraft", genero:"Sandbox", preco:49.90, imagem:"https://upload.wikimedia.org/wikipedia/en/5/51/Minecraft_cover.png" }
 ];
 
-let carrinho = currentUser.cart || [];
+let currentUser = JSON.parse(localStorage.getItem("currentUser")) || null;
+let carrinho = currentUser?.cart || [];
 
-// ELEMENTOS
-const catalogo = document.getElementById("catalogo");
+// ===== FUNÇÕES ABA =====
+function abrirAba(aba){
+    document.querySelectorAll("section").forEach(s => s.style.display="none");
+    document.getElementById(aba).style.display="block";
+}
+
+// ===== LOGIN =====
+function login(){
+    const user = document.getElementById("loginUser").value;
+    const pass = document.getElementById("loginPass").value;
+
+    const found = users.find(u=>u.username===user && u.password===pass);
+    if(!found) return alert("Usuário ou senha incorretos!");
+    currentUser = found;
+    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+    carrinho = currentUser.cart || [];
+    alert("Login realizado!");
+    abrirAba("loja");
+    mostrarJogos(jogos);
+    atualizarCarrinho();
+}
+
+// ===== REGISTRO =====
+function registrar(){
+    const user = document.getElementById("regUser").value;
+    const pass = document.getElementById("regPass").value;
+    if(!user||!pass) return alert("Preencha todos os campos!");
+
+    if(users.find(u=>u.username===user)) return alert("Usuário já existe!");
+    const novo = { username:user, password:pass, cart:[] };
+    users.push(novo);
+    localStorage.setItem("users", JSON.stringify(users));
+    alert("Cadastro realizado! Faça login.");
+    abrirAba("login");
+}
+
+// ===== LOGOUT =====
+function logout(){
+    localStorage.removeItem("currentUser");
+    currentUser=null;
+    carrinho=[];
+    abrirAba("login");
+}
+
+// ===== LOJA =====
+const catalogoEl = document.getElementById("catalogo");
 const search = document.getElementById("search");
 const listaCarrinho = document.getElementById("listaCarrinho");
 const totalSpan = document.getElementById("total");
-const carrinhoCount = document.getElementById("carrinhoCount");
-const modal = document.getElementById("carrinhoModal");
-const toast = document.getElementById("toast");
 
-// ==========================
-// FUNÇÕES PRINCIPAIS
-// ==========================
-function logout() {
-    localStorage.removeItem("currentUser");
-    window.location.href = "index.html";
-}
-
-// Mostrar jogos
 function mostrarJogos(lista){
-    catalogo.innerHTML = "";
-    lista.forEach(jogo => {
+    catalogoEl.innerHTML="";
+    lista.forEach(j=>{
         const card = document.createElement("div");
-        card.className = "card";
-        card.innerHTML = `
-            <img src="${jogo.imagem}">
+        card.className="card";
+        card.innerHTML=`
+            <img src="${j.imagem}">
             <div class="info">
-                <h3>${jogo.nome}</h3>
-                <span>${jogo.genero}</span><br>
-                <strong>R$ ${jogo.preco.toFixed(2)}</strong><br><br>
-                <button onclick='adicionarCarrinho(${JSON.stringify(jogo)})'>Comprar</button>
+                <h3>${j.nome}</h3>
+                <span>${j.genero}</span><br>
+                <strong>R$ ${j.preco.toFixed(2)}</strong><br><br>
+                <button>Adicionar ao Carrinho</button>
             </div>
         `;
-        catalogo.appendChild(card);
+        card.querySelector("button").addEventListener("click",()=>adicionarCarrinho(j));
+        catalogoEl.appendChild(card);
     });
 }
 
-// Busca com debounce
-let debounceTimeout;
-search.addEventListener("input", ()=>{
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(()=>{
-        const texto = search.value.toLowerCase();
-        mostrarJogos(jogos.filter(j => j.nome.toLowerCase().includes(texto)));
-    }, 300);
+// Busca
+search.addEventListener("input",()=>{
+    const txt = search.value.toLowerCase();
+    mostrarJogos(jogos.filter(j=>j.nome.toLowerCase().includes(txt)));
 });
 
 // Carrinho
-function adicionarCarrinho(jogo){
-    carrinho.push(jogo);
+function adicionarCarrinho(j){
+    carrinho.push(j);
     atualizarCarrinho();
-    mostrarToast(`${jogo.nome} adicionado ao carrinho ✅`);
-}
-
-function removerCarrinho(idx){
-    const removed = carrinho[idx].nome;
-    carrinho.splice(idx,1);
-    atualizarCarrinho();
-    mostrarToast(`${removed} removido do carrinho ❌`);
 }
 
 function atualizarCarrinho(){
-    listaCarrinho.innerHTML = "";
-    let total = 0;
+    listaCarrinho.innerHTML="";
+    let total=0;
     carrinho.forEach((item,i)=>{
-        total += item.preco;
-        listaCarrinho.innerHTML += `<li>${item.nome} - R$ ${item.preco.toFixed(2)} <button onclick="removerCarrinho(${i})">❌</button></li>`;
+        total+=item.preco;
+        listaCarrinho.innerHTML+=`<li>${item.nome} - R$ ${item.preco.toFixed(2)} <button onclick="removerCarrinho(${i})">❌</button></li>`;
     });
-    totalSpan.textContent = total.toFixed(2);
-    carrinhoCount.textContent = carrinho.length;
+    totalSpan.textContent=total.toFixed(2);
 
-    // Salvar no usuário
-    currentUser.cart = carrinho;
-    let users = JSON.parse(localStorage.getItem("users"));
-    const idx = users.findIndex(u => u.username === currentUser.username);
-    users[idx] = currentUser;
-    localStorage.setItem("users", JSON.stringify(users));
+    if(currentUser){
+        currentUser.cart=carrinho;
+        const idx = users.findIndex(u=>u.username===currentUser.username);
+        if(idx!==-1) users[idx]=currentUser;
+        localStorage.setItem("users", JSON.stringify(users));
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
+    }
 }
 
-// Modal carrinho
-function abrirCarrinho(){ modal.style.display = "block"; }
-function fecharCarrinho(){ modal.style.display = "none"; }
-window.onclick = function(event){ if(event.target === modal) modal.style.display="none"; }
-
-function finalizarCompra(){
-    if(carrinho.length === 0) return mostrarToast("Carrinho vazio!");
-    alert("✅ Compra realizada!");
-    carrinho = [];
+function removerCarrinho(idx){
+    carrinho.splice(idx,1);
     atualizarCarrinho();
 }
 
-// Toast notification
-function mostrarToast(msg){
-    toast.textContent = msg;
-    toast.className = "show";
-    setTimeout(()=>{ toast.className = toast.className.replace("show",""); }, 3000);
+function finalizarCompra(){
+    if(carrinho.length===0) return alert("Carrinho vazio!");
+    alert("✅ Compra realizada com sucesso!");
+    carrinho=[];
+    atualizarCarrinho();
 }
 
-// Inicializar
-mostrarJogos(jogos);
-atualizarCarrinho();
+// Inicialização
+if(currentUser){
+    abrirAba("loja");
+    mostrarJogos(jogos);
+    atualizarCarrinho();
+}else{
+    abrirAba("login");
+}
 </script>
+
 </body>
 </html>
