@@ -1,48 +1,42 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <title>Loja de Jogos</title>
-    <style>
-        .card { border: 1px solid #ccc; padding: 10px; margin: 10px; display:inline-block; width:200px; vertical-align:top; }
-        img { width:100%; height:auto; }
-    </style>
+<meta charset="UTF-8">
+<title>Login - Loja de Jogos</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Loja de Jogos</h1>
-    <input type="text" id="search" placeholder="Buscar jogo...">
-    <div id="catalogo"></div>
 
-    <script>
-        let jogos = JSON.parse(localStorage.getItem("games")) || [
-            { nome: "The Witcher 3", genero: "RPG", preco: 59.90, imagem: "https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg" },
-            { nome: "GTA V", genero: "Ação", preco: 79.90, imagem: "https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png" }
-        ];
+<div class="login">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Usuário">
+    <input type="password" id="password" placeholder="Senha">
+    <button onclick="login()">Entrar</button>
+</div>
 
-        const catalogo = document.getElementById("catalogo");
-        const search = document.getElementById("search");
+<script>
+const users = [
+    { username: "admin", password: "1234", role: "admin", cart: [] },
+    { username: "user", password: "1234", role: "user", cart: [] }
+];
 
-        function mostrarJogos(lista) {
-            catalogo.innerHTML = "";
-            lista.forEach(j => {
-                catalogo.innerHTML += `
-                    <div class="card">
-                        <img src="${j.imagem}">
-                        <h3>${j.nome}</h3>
-                        <span>${j.genero}</span><br>
-                        <strong>R$ ${j.preco.toFixed(2)}</strong>
-                    </div>
-                `;
-            });
-        }
+function login() {
+    const username = document.getElementById("username").value;
+    const password = document.getElementById("password").value;
 
-        mostrarJogos(jogos);
+    const found = users.find(u => u.username === username && u.password === password);
+    if(!found) return alert("Usuário ou senha incorretos!");
 
-        search.addEventListener("input", () => {
-            const texto = search.value.toLowerCase();
-            const filtrados = jogos.filter(j => j.nome.toLowerCase().includes(texto));
-            mostrarJogos(filtrados);
-        });
-    </script>
+    localStorage.setItem("currentUser", JSON.stringify(found));
+    localStorage.setItem("users", JSON.stringify(users));
+    
+    if(found.role === "admin") {
+        window.location.href = "admin.html";
+    } else {
+        window.location.href = "loja.html";
+    }
+}
+</script>
+
 </body>
 </html>
