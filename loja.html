@@ -10,16 +10,24 @@
 <header>
     <input type="text" id="search" placeholder="Buscar jogo...">
     <button onclick="logout()">Logout</button>
+    <button onclick="abrirCarrinho()" id="carrinhoBtn">🛒 Carrinho (<span id="carrinhoCount">0</span>)</button>
 </header>
 
 <div id="catalogo"></div>
 
-<div class="carrinho">
-    <h3>Carrinho</h3>
-    <ul id="listaCarrinho"></ul>
-    <strong>Total: R$ <span id="total">0.00</span></strong>
-    <button onclick="finalizarCompra()">Finalizar Compra</button>
+<!-- MODAL DO CARRINHO -->
+<div class="modal" id="carrinhoModal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharCarrinho()">&times;</span>
+        <h3>Carrinho</h3>
+        <ul id="listaCarrinho"></ul>
+        <strong>Total: R$ <span id="total">0.00</span></strong><br>
+        <button onclick="finalizarCompra()">Finalizar Compra</button>
+    </div>
 </div>
+
+<!-- NOTIFICAÇÃO -->
+<div id="toast"></div>
 
 <script>
 const currentUser = JSON.parse(localStorage.getItem("currentUser"));
@@ -37,16 +45,24 @@ let jogos = JSON.parse(localStorage.getItem("games")) || [
 
 let carrinho = currentUser.cart || [];
 
+// ELEMENTOS
 const catalogo = document.getElementById("catalogo");
 const search = document.getElementById("search");
 const listaCarrinho = document.getElementById("listaCarrinho");
 const totalSpan = document.getElementById("total");
+const carrinhoCount = document.getElementById("carrinhoCount");
+const modal = document.getElementById("carrinhoModal");
+const toast = document.getElementById("toast");
 
+// ==========================
+// FUNÇÕES PRINCIPAIS
+// ==========================
 function logout() {
     localStorage.removeItem("currentUser");
     window.location.href = "index.html";
 }
 
+// Mostrar jogos
 function mostrarJogos(lista){
     catalogo.innerHTML = "";
     lista.forEach(jogo => {
@@ -65,19 +81,28 @@ function mostrarJogos(lista){
     });
 }
 
+// Busca com debounce
+let debounceTimeout;
 search.addEventListener("input", ()=>{
-    const texto = search.value.toLowerCase();
-    mostrarJogos(jogos.filter(j => j.nome.toLowerCase().includes(texto)));
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(()=>{
+        const texto = search.value.toLowerCase();
+        mostrarJogos(jogos.filter(j => j.nome.toLowerCase().includes(texto)));
+    }, 300);
 });
 
+// Carrinho
 function adicionarCarrinho(jogo){
     carrinho.push(jogo);
     atualizarCarrinho();
+    mostrarToast(`${jogo.nome} adicionado ao carrinho ✅`);
 }
 
 function removerCarrinho(idx){
+    const removed = carrinho[idx].nome;
     carrinho.splice(idx,1);
     atualizarCarrinho();
+    mostrarToast(`${removed} removido do carrinho ❌`);
 }
 
 function atualizarCarrinho(){
@@ -88,8 +113,9 @@ function atualizarCarrinho(){
         listaCarrinho.innerHTML += `<li>${item.nome} - R$ ${item.preco.toFixed(2)} <button onclick="removerCarrinho(${i})">❌</button></li>`;
     });
     totalSpan.textContent = total.toFixed(2);
+    carrinhoCount.textContent = carrinho.length;
 
-    // salvar no usuário
+    // Salvar no usuário
     currentUser.cart = carrinho;
     let users = JSON.parse(localStorage.getItem("users"));
     const idx = users.findIndex(u => u.username === currentUser.username);
@@ -97,13 +123,26 @@ function atualizarCarrinho(){
     localStorage.setItem("users", JSON.stringify(users));
 }
 
+// Modal carrinho
+function abrirCarrinho(){ modal.style.display = "block"; }
+function fecharCarrinho(){ modal.style.display = "none"; }
+window.onclick = function(event){ if(event.target === modal) modal.style.display="none"; }
+
 function finalizarCompra(){
-    if(carrinho.length === 0) return alert("Carrinho vazio!");
+    if(carrinho.length === 0) return mostrarToast("Carrinho vazio!");
     alert("✅ Compra realizada!");
     carrinho = [];
     atualizarCarrinho();
 }
 
+// Toast notification
+function mostrarToast(msg){
+    toast.textContent = msg;
+    toast.className = "show";
+    setTimeout(()=>{ toast.className = toast.className.replace("show",""); }, 3000);
+}
+
+// Inicializar
 mostrarJogos(jogos);
 atualizarCarrinho();
 </script>
