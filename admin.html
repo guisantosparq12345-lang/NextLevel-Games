@@ -1,36 +1,105 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Loja de Jogos</title>
+    <title>Admin - Catálogo</title>
     <style>
-        body { font-family: Arial; padding:20px; background:#f0f0f0; }
-        #adminContent { display:none; } /* 🔒 Escondido por padrão */
-        #catalogo { display:flex; flex-wrap:wrap; gap:20px; }
-        .card { background:#fff; padding:15px; border-radius:8px; box-shadow:0 0 5px rgba(0,0,0,0.2); width:200px; }
-        input { padding:5px; margin:5px 0; width:200px; display:block; }
-        button { padding:5px 10px; margin-top:5px; cursor:pointer; }
+        .card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; width: 200px; }
     </style>
 </head>
 <body>
-    <h1>Admin - Loja de Jogos</h1>
+    <h1>Admin - Gerenciar Jogos</h1>
+    <button onclick="logout()">Sair</button>
 
-    <div id="adminContent">
-        <button onclick="logout()">Sair</button>
+    <h3>Adicionar Jogo</h3>
+    <input type="text" id="gameName" placeholder="Nome">
+    <input type="text" id="gameGenre" placeholder="Gênero">
+    <input type="number" id="gamePrice" placeholder="Preço">
+    <input type="text" id="gameImage" placeholder="URL da Imagem">
+    <button onclick="adicionarJogo()">Adicionar</button>
 
-        <h2>Adicionar Jogo</h2>
-        <input type="text" id="gameName" placeholder="Nome do Jogo">
-        <input type="text" id="gameGenre" placeholder="Gênero">
-        <input type="number" step="0.01" id="gamePrice" placeholder="Preço">
-        <input type="text" id="gameImage" placeholder="URL da Imagem">
-        <button onclick="adicionarJogo()">Adicionar</button>
+    <h3>Catálogo</h3>
+    <input type="text" id="search" placeholder="Buscar...">
+    <div id="catalogo"></div>
 
-        <h2>Catálogo</h2>
-        <input type="text" id="search" placeholder="Pesquisar...">
-        <div id="catalogo"></div>
-    </div>
+    <script>
+        // Proteção admin
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+        if(!currentUser || currentUser.role !== "admin") {
+            alert("🔒 Apenas administradores podem acessar!");
+            window.location.href = "login.html";
+        }
 
-    <script src="admin.js"></script>
+        let jogos = JSON.parse(localStorage.getItem("games")) || [];
+
+        const catalogo = document.getElementById("catalogo");
+        const search = document.getElementById("search");
+
+        function logout() {
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+        }
+
+        function mostrarJogos(lista) {
+            catalogo.innerHTML = "";
+            lista.forEach((jogo, idx) => {
+                const card = document.createElement("div");
+                card.className = "card";
+                card.innerHTML = `
+                    <img src="${jogo.imagem}" width="150"><br>
+                    <strong>${jogo.nome}</strong><br>
+                    ${jogo.genero}<br>
+                    R$ ${jogo.preco.toFixed(2)}<br>
+                    <button onclick="editarJogo(${idx})">✏️ Editar</button>
+                    <button onclick="removerJogo(${idx})">❌ Remover</button>
+                `;
+                catalogo.appendChild(card);
+            });
+        }
+
+        if(search){
+            search.addEventListener("input", () => {
+                const texto = search.value.toLowerCase();
+                const filtrados = jogos.filter(j => j.nome.toLowerCase().includes(texto));
+                mostrarJogos(filtrados);
+            });
+        }
+
+        function adicionarJogo() {
+            const nome = document.getElementById("gameName").value;
+            const genero = document.getElementById("gameGenre").value;
+            const preco = parseFloat(document.getElementById("gamePrice").value);
+            const imagem = document.getElementById("gameImage").value;
+
+            if(!nome || !genero || !preco || !imagem) return alert("Preencha todos os campos!");
+            jogos.push({nome, genero, preco, imagem});
+            localStorage.setItem("games", JSON.stringify(jogos));
+            mostrarJogos(jogos);
+        }
+
+        function removerJogo(idx){
+            if(!confirm("Deseja remover este jogo?")) return;
+            jogos.splice(idx,1);
+            localStorage.setItem("games", JSON.stringify(jogos));
+            mostrarJogos(jogos);
+        }
+
+        function editarJogo(idx){
+            const jogo = jogos[idx];
+            const novoNome = prompt("Nome:", jogo.nome);
+            const novoGenero = prompt("Gênero:", jogo.genero);
+            const novoPreco = parseFloat(prompt("Preço:", jogo.preco));
+            const novaImagem = prompt("URL da Imagem:", jogo.imagem);
+
+            if(!novoNome || !novoGenero || !novoPreco || !novaImagem) return;
+
+            jogos[idx] = {nome: novoNome, genero: novoGenero, preco: novoPreco, imagem: novaImagem};
+            localStorage.setItem("games", JSON.stringify(jogos));
+            mostrarJogos(jogos);
+        }
+
+        // Inicializa
+        mostrarJogos(jogos);
+    </script>
 </body>
 </html>
- 
