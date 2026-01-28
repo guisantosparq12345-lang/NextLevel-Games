@@ -3,6 +3,7 @@ body {
     font-family: Arial, sans-serif;
     background: #0f172a;
     color: white;
+    padding-right: 280px; /* espaço para carrinho */
 }
 
 header {
@@ -42,14 +43,21 @@ header input {
 }
 
 .info button {
-    padding: 8px;
+    padding: 10px;
     width: 100%;
     background: #22c55e;
     border: none;
+    border-radius: 5px;
+    color: white;
+    font-weight: bold;
     cursor: pointer;
+    transition: 0.2s;
 }
 
-/* CARRINHO */
+.info button:hover {
+    background: #16a34a;
+}
+
 .carrinho {
     position: fixed;
     right: 0;
@@ -59,6 +67,7 @@ header input {
     background: #020617;
     padding: 15px;
     border-left: 2px solid #22c55e;
+    overflow-y: auto;
 }
 
 .carrinho ul {
@@ -71,12 +80,31 @@ header input {
     margin-bottom: 10px;
 }
 
-/* LOGIN */
 .login {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
     padding: 50px;
     max-width: 300px;
-    margin: auto;
+    margin: 100px auto;
+    background: #020617;
+    border-radius: 10px;
+}
+
+.login input, .login button {
+    width: 100%;
+}
+
+@media(max-width: 768px){
+    #catalogo {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+
+    .carrinho {
+        width: 200px;
+    }
+
+    .card img {
+        height: 200px;
+    }
 }
