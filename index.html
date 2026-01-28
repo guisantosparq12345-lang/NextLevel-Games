@@ -5,98 +5,44 @@
     <title>Loja de Jogos</title>
     <style>
         .card { border: 1px solid #ccc; padding: 10px; margin: 10px; display:inline-block; width:200px; vertical-align:top; }
-        button { margin-top:5px; }
+        img { width:100%; height:auto; }
     </style>
 </head>
 <body>
     <h1>Loja de Jogos</h1>
-    <button onclick="logout()">Sair</button>
-    <input type="text" id="search" placeholder="Buscar...">
-
-    <h2>Catálogo</h2>
+    <input type="text" id="search" placeholder="Buscar jogo...">
     <div id="catalogo"></div>
 
-    <h2>Carrinho</h2>
-    <ul id="listaCarrinho"></ul>
-    <strong>Total: R$ <span id="total">0.00</span></strong>
-    <br>
-    <button onclick="finalizarCompra()">Finalizar Compra</button>
-
     <script>
-        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-        if(!currentUser) {
-            alert("Faça login primeiro!");
-            window.location.href = "login.html";
-        }
-
         let jogos = JSON.parse(localStorage.getItem("games")) || [
-            { nome:"The Witcher 3", genero:"RPG", preco:59.9, imagem:"https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg" },
-            { nome:"GTA V", genero:"Ação", preco:79.9, imagem:"https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png" }
+            { nome: "The Witcher 3", genero: "RPG", preco: 59.90, imagem: "https://upload.wikimedia.org/wikipedia/en/0/0c/Witcher_3_cover_art.jpg" },
+            { nome: "GTA V", genero: "Ação", preco: 79.90, imagem: "https://upload.wikimedia.org/wikipedia/en/a/a5/Grand_Theft_Auto_V.png" }
         ];
 
         const catalogo = document.getElementById("catalogo");
         const search = document.getElementById("search");
-        const listaCarrinho = document.getElementById("listaCarrinho");
-        const totalSpan = document.getElementById("total");
-        let carrinho = [];
-
-        function logout() {
-            localStorage.removeItem("currentUser");
-            window.location.href = "login.html";
-        }
 
         function mostrarJogos(lista) {
             catalogo.innerHTML = "";
-            lista.forEach((jogo, idx) => {
-                const card = document.createElement("div");
-                card.className = "card";
-                card.innerHTML = `
-                    <img src="${jogo.imagem}" width="150"><br>
-                    <strong>${jogo.nome}</strong><br>
-                    ${jogo.genero}<br>
-                    R$ ${jogo.preco.toFixed(2)}<br>
-                    <button onclick='adicionarCarrinho(${JSON.stringify(jogo)})'>Comprar</button>
+            lista.forEach(j => {
+                catalogo.innerHTML += `
+                    <div class="card">
+                        <img src="${j.imagem}">
+                        <h3>${j.nome}</h3>
+                        <span>${j.genero}</span><br>
+                        <strong>R$ ${j.preco.toFixed(2)}</strong>
+                    </div>
                 `;
-                catalogo.appendChild(card);
             });
-        }
-
-        if(search){
-            search.addEventListener("input", () => {
-                const texto = search.value.toLowerCase();
-                const filtrados = jogos.filter(j => j.nome.toLowerCase().includes(texto));
-                mostrarJogos(filtrados);
-            });
-        }
-
-        function adicionarCarrinho(jogo){
-            carrinho.push(jogo);
-            atualizarCarrinho();
-        }
-
-        function atualizarCarrinho(){
-            listaCarrinho.innerHTML = "";
-            let total = 0;
-            carrinho.forEach((item,index)=>{
-                total += item.preco;
-                listaCarrinho.innerHTML += `<li>${item.nome} - R$ ${item.preco.toFixed(2)} <button onclick="removerCarrinho(${index})">❌</button></li>`;
-            });
-            totalSpan.textContent = total.toFixed(2);
-        }
-
-        function removerCarrinho(idx){
-            carrinho.splice(idx,1);
-            atualizarCarrinho();
-        }
-
-        function finalizarCompra(){
-            if(carrinho.length === 0) return alert("Carrinho vazio!");
-            alert("Compra realizada com sucesso!");
-            carrinho = [];
-            atualizarCarrinho();
         }
 
         mostrarJogos(jogos);
+
+        search.addEventListener("input", () => {
+            const texto = search.value.toLowerCase();
+            const filtrados = jogos.filter(j => j.nome.toLowerCase().includes(texto));
+            mostrarJogos(filtrados);
+        });
     </script>
 </body>
 </html>
