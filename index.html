@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>Loja de Jogos</title>
+<style>
+/* ===== RESET BÁSICO ===== */
+* { box-sizing: border-box; margin:0; padding:0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+body { background:#121212; color:#fff; padding:20px; }
+
+/* ===== TÍTULOS ===== */
+h1 { margin-bottom:20px; color:#00ffff; text-align:center; }
+h2 { margin-bottom:15px; color:#00ffff; }
+
+/* ===== ABAS ===== */
+#tabs { display:flex; justify-content:center; margin-bottom:20px; }
+#tabs button {
+    background:#1f1f1f; color:#fff; border:none; padding:10px 20px; margin:0 5px; border-radius:5px; cursor:pointer;
+    transition: 0.2s;
+}
+#tabs button:hover { background:#00ffff; color:#000; }
+
+/* ===== FORMULÁRIOS ===== */
+input, button { padding:10px; margin:5px 0; border-radius:5px; border:none; }
+input { width:100%; max-width:300px; }
+button { cursor:pointer; background:#00ffff; color:#000; font-weight:bold; transition:0.2s; }
+button:hover { background:#00bfbf; }
+
+/* ===== SEÇÕES ===== */
+#loginForm, #adminContent, #lojaContent { display:none; margin-top:20px; }
+
+/* ===== CATALOGO ===== */
+#catalogo, #adminCatalogo { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; }
+.card {
+    background:#1f1f1f; padding:15px; border-radius:10px; width:200px; text-align:center;
+    box-shadow: 0 5px 15px rgba(0,255,255,0.2); transition:0.3s;
+}
+.card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,255,255,0.4); }
+.card img { width:100%; border-radius:5px; margin-bottom:10px; }
+.card h3 { margin:5px 0; color:#00ffff; }
+.card p, .card strong { margin:5px 0; }
+
+/* ===== CARRINHO ===== */
+#carrinho { background:#1f1f1f; padding:15px; border-radius:10px; margin-top:20px; width:90%; max-width:500px; margin-left:auto; margin-right:auto; }
+#carrinho ul { list-style:none; margin-top:10px; }
+#carrinho button { background:#ff5555; color:#fff; padding:5px 10px; margin-left:10px; }
+
+/* ===== RESPONSIVO ===== */
+@media(max-width:600px){
+    #catalogo, #adminCatalogo { flex-direction:column; align-items:center; }
+    .card { width:90%; }
+    input, button { width:90%; }
+}
+</style>
+</head>
+<body>
+
+<h1>Loja de Jogos</h1>
+
+<div id="tabs">
+    <button onclick="abrirAba('login')">Login</button>
+    <button onclick="abrirAba('loja')">Loja</button>
+    <button id="adminTab" onclick="abrirAba('admin')" style="display:none;">Admin</button>
+    <button onclick="logout()" style="margin-left:20px;">Logout</button>
+</div>
+
+<!-- LOGIN -->
+<div id="loginForm">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Usuário"><br>
+    <input type="password" id="password" placeholder="Senha"><br>
+    <button onclick="login()">Entrar</button>
+</div>
+
+<!-- LOJA -->
+<div id="lojaContent">
+    <h2>Catálogo</h2>
+    <input type="text" id="search" placeholder="Pesquisar..."><br>
+    <div id="catalogo"></div>
+
+    <div id="carrinho">
+        <h3>Carrinho</h3>
+        <ul id="carrinhoLista"></ul>
+        <strong>Total: R$ <span id="total">0.00</span></strong><br>
+        <button onclick="finalizarCompra()">Finalizar Compra</button>
+    </div>
+</div>
+
+<!-- ADMIN -->
+<div id="adminContent">
+    <h2>Admin - Gerenciar Jogos</h2>
+    <input type="text" id="gameName" placeholder="Nome do Jogo"><br>
+    <input type="text" id="gameGenre" placeholder="Gênero"><br>
+    <input type="number" step="0.01" id="gamePrice" placeholder="Preço"><br>
+    <input type="text" id="gameImage" placeholder="URL da Imagem"><br>
+    <button onclick="adicionarJogo()">Adicionar Jogo</button>
+    <div id="adminCatalogo"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
